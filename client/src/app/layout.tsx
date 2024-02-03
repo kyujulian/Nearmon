@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import { Montserrat } from 'next/font/google'
 import './globals.css'
 import Navbar from '@/sections/Navbar'
+import Footer from '@/sections/Footer'
 
 const inter = Inter({ subsets: ['latin'] })
 const montserrat = Montserrat({ subsets: ['latin'] })
@@ -20,7 +21,9 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body className={`${montserrat.className} background_gradient`} >
+                <Navbar />
                 {children}
+                <Footer />
             </body>
         </html>
     )

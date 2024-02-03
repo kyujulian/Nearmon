@@ -3,7 +3,7 @@ export type Pokemon = {
     spriteUrl: string
 }
 export async function getPokemons(): Promise<Pokemon[]> {
-    const response = await fetch('https://pokeapi.co/api/v2/pokemon?limit=151');
+    const response = await fetch('https://pokeapi.co/api/v2/pokemon?limit=30');
     const data = await response.json();
 
 
