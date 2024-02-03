@@ -1,0 +1,14 @@
+.background_gradient {
+    background: rgb(238, 174, 202);
+    background: radial-gradient(circle, rgba(238, 174, 202, 0.3811099439775911) 0%, rgba(148, 187, 233, 0.3875525210084033) 100%);
+}
+
+.navbar_gradient {
+    backdrop-filter: blur(11px) saturate(100%);
+    -webkit-backdrop-filter: blur(11px) saturate(100%);
+    background-color: rgba(249, 249, 249, 0.25);
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
