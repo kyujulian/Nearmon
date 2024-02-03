@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import PokemonSelector from '@/components/PokemonSelector'
 import Navbar from "@/sections/Navbar"
+import PokemonList from "@/sections/PokemonList"
 export default function Home() {
     return (
         <main className="">
@@ -13,6 +14,7 @@ export default function Home() {
                 </h1>
                 <PokemonSelector />
             </div>
+            <PokemonList />
         </main>
     )
 }
