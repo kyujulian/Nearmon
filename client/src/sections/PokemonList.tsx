@@ -68,26 +68,28 @@ const PokemonList = () => {
     };
 
     // infinite scroll
-    window.onscroll = function(ev) {
-        let bottom = (window.innerHeight + window.scrollY) == document.body.offsetHeight;
+    if (window) {
+        window.onscroll = function(ev) {
+            let bottom = (window.innerHeight + window.scrollY) == document.body.offsetHeight;
 
-        if (bottom && !isSearching) {
-            console.log('bottom')
+            if (bottom && !isSearching) {
+                console.log('bottom')
 
-            const fetchPokemons = async () => {
-                let newpokemons = await getPokemons(DEFAULT_LIMIT, offset);
+                const fetchPokemons = async () => {
+                    let newpokemons = await getPokemons(DEFAULT_LIMIT, offset);
 
 
 
-                console.log('new', newpokemons)
-                //append newly fetched pokemons to the existing list without replacing or repeating
-                setPokemons([...pokemons, ...newpokemons]);
+                    console.log('new', newpokemons)
+                    //append newly fetched pokemons to the existing list without replacing or repeating
+                    setPokemons([...pokemons, ...newpokemons]);
 
-                setOffset(offset + DEFAULT_OFFSET)// called after because of the delay in hook
+                    setOffset(offset + DEFAULT_OFFSET)// called after because of the delay in hook
+                }
+                fetchPokemons();
             }
-            fetchPokemons();
-        }
 
+        }
     }
 
     const forceSearch = (e: any) => {
