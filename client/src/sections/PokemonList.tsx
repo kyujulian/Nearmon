@@ -27,6 +27,8 @@ const DEFAULT_LIMIT = 30;
 const PokemonList = (props: { selectPokemon: any }) => {
 
 
+    // can I sneak a useMemo here?
+
     const [pokemons, setPokemons] = useState<Pokemon[]>([]);
     const [oldPokemons, setOldPokemons] = useState<Pokemon[]>([]); // for memoizing
 

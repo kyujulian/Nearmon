@@ -4,7 +4,7 @@ use near_sdk::collections::Vector;
 // use near_sdk::env::log_str;
 // use near_sdk::json_types::U128;
 use near_sdk::near_bindgen;
-use near_sdk::serde::Serialize;
+use near_sdk::serde::{Deserialize, Serialize};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 fn current_timestamp_millis() -> u64 {
@@ -27,23 +27,23 @@ fn current_timestamp_millis_offset_by(offset_sec: u64) -> u64 {
     since_the_epoch as u64
 }
 
-// fn current_timestamp_seconds() -> u64 {
-//     let start = SystemTime::now();
-//     let since_the_epoch = start
-//         .duration_since(UNIX_EPOCH)
-//         .expect("Time went backwards");
-//     since_the_epoch.as_secs() // No conversion needed for seconds
-// }
+fn current_timestamp_seconds() -> u64 {
+    let start = SystemTime::now();
+    let since_the_epoch = start
+        .duration_since(UNIX_EPOCH)
+        .expect("Time went backwards");
+    since_the_epoch.as_secs() // No conversion needed for seconds
+}
 
-#[derive(Serialize, BorshDeserialize, BorshSerialize, Debug)]
+#[derive(Serialize, BorshDeserialize, BorshSerialize, Debug, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
 pub struct Pokemon {
     name: String,
     votes: usize,
 }
 
-#[near_bindgen]
-#[derive(BorshDeserialize, BorshSerialize, Debug)]
+#[derive(BorshDeserialize, BorshSerialize, Debug, Deserialize, Serialize)]
+#[serde(crate = "near_sdk::serde")]
 pub struct PokemonContest {
     id: u64,
     max_time: u64,
@@ -94,7 +94,8 @@ impl PokemonContest {
 
 // Define the contract structure
 #[near_bindgen]
-#[derive(BorshDeserialize, BorshSerialize, Debug)]
+#[derive(BorshDeserialize, BorshSerialize, Debug, Deserialize, Serialize)]
+#[serde(crate = "near_sdk::serde")]
 pub struct Contract {
     greeting: String,
     contests: Vec<PokemonContest>,

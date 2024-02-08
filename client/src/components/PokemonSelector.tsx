@@ -11,9 +11,6 @@ import type { Pokemon } from '@/services/pokemons'
 
 const PokemonSelector = () => {
 
-    // let pokemon1 = await getPokemonByName('pikachu');
-    // let pokemon2 = await getPokemonByName('charmander');
-
     const [pokemonFirst, setPokemonFirst] = useState<Pokemon | null>(null);
     const [pokemonSecond, setPokemonSecond] = useState<Pokemon | null>(null);
 
@@ -29,7 +26,6 @@ const PokemonSelector = () => {
                     <PokemonCard key="" pokemon={pokemonSecond} setPokemon={setPokemonSecond} />
                 </div>
             </div>
-
             <button onClick={() => { console.log("Pokemon 1:", pokemonFirst?.name); console.log("Pokemon 2:", pokemonSecond?.name) }} className="max-w-24 rounded-md bg-black px-4 py-2 text-white hover:scale-110 transition shadow-black drop-shadow-sm">
                 Send
             </button>
