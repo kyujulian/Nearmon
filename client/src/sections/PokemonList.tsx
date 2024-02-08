@@ -4,6 +4,19 @@ import type { Pokemon } from '@/services/pokemons'
 import PokemonCard from '@/components/PokemonCard'
 
 
+const PokemonCardItem = (props: { pokemon: Pokemon, selectPokemon: any }) => {
+
+    return (
+        <div onClick={props.selectPokemon} pokemon-name={props.pokemon.name} pokemon-spriteurl={props.pokemon.spriteUrl} className="h-[200px] w-[200px] flex items-center justify-center flex-col gap-2 hover:scale-105 hover:cursor-pointer">
+            <div className="overflow-hidden rounded-full  h-[150px] w-[150px] bg-white flex justify-center items-center">
+                <img src={props.pokemon.spriteUrl} alt={props.pokemon.name} className="w-[150px] h-[150px]" />
+            </div>
+            <p className="text-center">{props.pokemon.name}</p>
+        </div>
+    )
+}
+
+
 import autoAnimate from "@formkit/auto-animate";
 
 import { useEffect, useState, useRef } from 'react';
@@ -11,7 +24,7 @@ import { useEffect, useState, useRef } from 'react';
 const DEFAULT_OFFSET = 30;
 const DEFAULT_LIMIT = 30;
 
-const PokemonList = () => {
+const PokemonList = (props: { selectPokemon: any }) => {
 
 
     const [pokemons, setPokemons] = useState<Pokemon[]>([]);
@@ -104,15 +117,12 @@ const PokemonList = () => {
 
 
     return (
-        <div className="w-full  mx-auto pb-16 min-h-[1000px]">
+        <div className=" absolute top-0 left-0 w-[600px]  mx-auto pb-16 h-[600px] rounded-xl bg-gray-100 overflow-scroll overflow-x-hidden z-50 border-gray-400 border-[1px]">
             <div className="max-w-7xl mx-auto">
                 <div className="flex flex-row justify-between items-center ">
-                    <h1 className="text-3l font-bold my-20">
-                        Pokemons
-                    </h1>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 mx-auto py-10">
                         <input type="text" placeholder="Search Pokemon" value={filter} onChange={handleSearchInputChange} className="max-w-xl border-[1px] border-gray-400 rounded-md p-2" />
-                        <button className="bg-black text-white rounded-md p-2 hover:scale-110 transition" onClick={forceSearch}>Submit</button>
+                        <button className="bg-black text-white rounded-md p-2 transition" onClick={forceSearch}>Submit</button>
                     </div>
                 </div>
                 <div ref={parent} className="flex flex-wrap gap-2  items-start justify-center ">
@@ -121,7 +131,7 @@ const PokemonList = () => {
                             return pokemon.name.toLowerCase().includes(filter.toLowerCase())
                         }).map((pokemon: Pokemon, i) => {
                             return (
-                                <PokemonCard pokemon={pokemon} key={pokemon.name + i} />
+                                <PokemonCardItem pokemon={pokemon} selectPokemon={props.selectPokemon} key={pokemon.name + i} />
                             )
                         })
                     }
