@@ -27,13 +27,13 @@ fn current_timestamp_millis_offset_by(offset_sec: u64) -> u64 {
     since_the_epoch as u64
 }
 
-fn current_timestamp_seconds() -> u64 {
-    let start = SystemTime::now();
-    let since_the_epoch = start
-        .duration_since(UNIX_EPOCH)
-        .expect("Time went backwards");
-    since_the_epoch.as_secs() // No conversion needed for seconds
-}
+// fn current_timestamp_seconds() -> u64 {
+//     let start = SystemTime::now();
+//     let since_the_epoch = start
+//         .duration_since(UNIX_EPOCH)
+//         .expect("Time went backwards");
+//     since_the_epoch.as_secs() // No conversion needed for seconds
+// }
 
 #[derive(Serialize, BorshDeserialize, BorshSerialize, Debug)]
 #[serde(crate = "near_sdk::serde")]
