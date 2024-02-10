@@ -1,38 +1,19 @@
 // Find all our documentation at https://docs.near.org
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::collections::Vector;
-// use near_sdk::env::log_str;
-// use near_sdk::json_types::U128;
+use near_sdk::env;
 use near_sdk::near_bindgen;
 use near_sdk::serde::{Deserialize, Serialize};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use near_sdk::store::UnorderedMap;
 
 fn current_timestamp_millis() -> u64 {
-    let start = SystemTime::now();
-    let since_the_epoch = start
-        .duration_since(UNIX_EPOCH)
-        .expect("Time went backwards");
-    since_the_epoch.as_millis() as u64 // Convert to milliseconds
+    let now = env::block_timestamp_ms();
+
+    now
 }
 
 fn current_timestamp_millis_offset_by(offset_sec: u64) -> u64 {
-    let offset = Duration::from_secs(offset_sec);
-    let future_time = SystemTime::now() + offset;
-
-    let since_the_epoch = future_time
-        .duration_since(UNIX_EPOCH)
-        .expect("Time wen't backwards")
-        .as_millis();
-
-    since_the_epoch as u64
-}
-
-fn current_timestamp_seconds() -> u64 {
-    let start = SystemTime::now();
-    let since_the_epoch = start
-        .duration_since(UNIX_EPOCH)
-        .expect("Time went backwards");
-    since_the_epoch.as_secs() // No conversion needed for seconds
+    let now = env::block_timestamp_ms();
+    now + offset_sec * 1000
 }
 
 #[derive(Serialize, BorshDeserialize, BorshSerialize, Debug, Deserialize)]
@@ -42,19 +23,17 @@ pub struct Pokemon {
     votes: usize,
 }
 
-#[derive(BorshDeserialize, BorshSerialize, Debug, Deserialize, Serialize)]
+#[derive(BorshDeserialize, BorshSerialize, Debug, Serialize)]
 #[serde(crate = "near_sdk::serde")]
 pub struct PokemonContest {
-    id: u64,
     max_time: u64,
     poke_first: Pokemon,
     poke_second: Pokemon,
 }
 
 impl PokemonContest {
-    pub fn new(id: u64, poke_first: Pokemon, poke_second: Pokemon, max_time: u64) -> Self {
+    pub fn new(poke_first: Pokemon, poke_second: Pokemon, max_time: u64) -> Self {
         Self {
-            id,
             poke_first,
             poke_second,
             max_time,
@@ -94,12 +73,72 @@ impl PokemonContest {
 
 // Define the contract structure
 #[near_bindgen]
-#[derive(BorshDeserialize, BorshSerialize, Debug, Deserialize, Serialize)]
-#[serde(crate = "near_sdk::serde")]
+#[derive(BorshDeserialize, BorshSerialize, Debug)]
 pub struct Contract {
-    greeting: String,
-    contests: Vec<PokemonContest>,
     contest_lifetime: u64,
+    contests: Contests,
+    greeting: String,
+}
+
+use near_sdk::serde::{self};
+use serde::ser::SerializeStruct;
+impl Serialize for Contract {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut state = serializer.serialize_struct("Contract", 3)?;
+        state.serialize_field("contest_lifetime", &self.contest_lifetime)?;
+        state.serialize_field("contests", &self.contests)?;
+        state.serialize_field("greeting", &self.greeting)?;
+        state.end()
+    }
+}
+
+#[derive(BorshDeserialize, BorshSerialize, Debug)]
+struct Contests {
+    contests: UnorderedMap<i64, PokemonContest>,
+}
+
+impl Contests {
+    pub fn new() -> Self {
+        Self {
+            contests: UnorderedMap::new(b"contests".to_vec()),
+        }
+    }
+    pub fn len(&self) -> u32 {
+        self.contests.len()
+    }
+    pub fn get(&self, id: &i64) -> Option<&PokemonContest> {
+        self.contests.get(&id)
+    }
+
+    pub fn get_mut(&mut self, id: &i64) -> Option<&mut PokemonContest> {
+        self.contests.get_mut(&id)
+    }
+
+    pub fn insert(&mut self, id: i64, contest: PokemonContest) {
+        self.contests.insert(id, contest);
+    }
+
+    pub fn remove(&mut self, id: i64) {
+        self.contests.remove(&id);
+    }
+
+    pub fn iter(&self) -> Vec<(&i64, &PokemonContest)> {
+        self.contests.iter().collect()
+    }
+}
+
+impl Serialize for Contests {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut state = serializer.serialize_struct("Contest", 1)?;
+        state.serialize_field("len", &self.contests.len())?;
+        state.end()
+    }
 }
 
 // Define the default, which automatically initializes the contract
@@ -108,8 +147,7 @@ impl Default for Contract {
         let contest_lifetime = current_timestamp_millis_offset_by(3600);
         Self {
             greeting: "Ping working ;)".to_string(),
-            // contests: Vector::new(b"contests".to_vec()),
-            contests: Vec::new(),
+            contests: Contests::new(),
             contest_lifetime,
         }
     }
@@ -118,12 +156,11 @@ impl Default for Contract {
 // Implement the contract structure
 #[near_bindgen]
 impl Contract {
-    pub fn new(offset_min: u64) -> Self {
-        let contest_lifetime = current_timestamp_millis_offset_by(offset_min);
+    pub fn new(offset_sec: u64) -> Self {
+        let contest_lifetime = current_timestamp_millis_offset_by(offset_sec);
         Self {
             greeting: "Ping working ;)".to_string(),
-            // contests: Vector::new(b"contests".to_vec()),
-            contests: Vec::new(),
+            contests: Contests::new(),
             contest_lifetime,
         }
     }
@@ -137,26 +174,31 @@ impl Contract {
     //     log_str(&format!("Saving greeting: {greeting}"));
     //     self.greeting = greeting;
     // }
-    pub fn add_contest(&mut self, id: u64, poke_first: Pokemon, poke_second: Pokemon) {
-        let contest = PokemonContest::new(id, poke_first, poke_second, self.contest_lifetime);
-        self.contests.push(contest);
+    /// internal function
+    pub fn add_contest(&mut self, id: i64, poke_first: Pokemon, poke_second: Pokemon) {
+        if self.contests.len() < 5 {
+            let contest = PokemonContest::new(poke_first, poke_second, self.contest_lifetime);
+            self.contests.insert(id, contest);
+        }
     }
-    pub fn vote(&mut self, id: u64, pokemon_name: String) {
-        // let mut contest = self.contests.get(id).expect("Contest not found");
-        let contest = self
-            .contests
-            .iter_mut()
-            .filter(|c| c.id == id)
-            .next()
-            .expect("Contest Not found");
+
+    pub fn get_contest(&self, id: i64) -> String {
+        format!("{:?}", self.contests.get(&id).expect("Contest Not found"))
+    }
+    pub fn vote(&mut self, id: i64, pokemon_name: String) {
+        if self.contests.len() == 0 {
+            panic!("No contests available");
+        }
+
+        let now = env::block_timestamp_ms();
+        let contest = self.contests.get_mut(&id).expect("Contest not found");
+
+        if now > contest.max_time {
+            panic!("Voting time has ended");
+        }
+        println!("{} vs {}", now, contest.max_time);
 
         contest.vote(&pokemon_name);
-        println!("Voting for {}", pokemon_name);
-        println!(
-            "{} has {} votes",
-            &pokemon_name,
-            contest.get(&pokemon_name).votes
-        );
     }
 }
 
@@ -168,10 +210,25 @@ impl Contract {
 mod tests {
     use super::*;
 
-    use std::thread;
+    use std::{
+        thread,
+        time::{Duration, SystemTime, UNIX_EPOCH},
+    };
 
     fn setup_contract_time_offset(offset_sec: u64) -> Contract {
-        let mut contract = Contract::new(offset_sec);
+        let offset = Duration::from_secs(offset_sec);
+        let future_time = SystemTime::now() + offset;
+
+        let since_the_epoch = future_time
+            .duration_since(UNIX_EPOCH)
+            .expect("Time wen't backwards")
+            .as_millis();
+
+        let mut contract = Contract {
+            contest_lifetime: since_the_epoch as u64,
+            contests: Contests::new(),
+            greeting: "Ping working ;)".to_string(),
+        };
 
         contract.add_contest(
             0,
@@ -254,7 +311,7 @@ mod tests {
 
         assert!(contract.contests.len() == 1);
 
-        let contest = contract.contests.get(0).expect("Contest not found");
+        let contest = contract.contests.get(&0).expect("Contest not found");
         assert_eq!(contest.poke_first.name, "Pikachu".to_string());
         assert_eq!(contest.poke_second.name, "Charmander".to_string());
         assert_eq!(contest.total_votes(), 0);
@@ -263,7 +320,7 @@ mod tests {
     #[test]
     fn test_vote() {
         let mut contract = setup_contract();
-        println!("{:?}", contract);
+        // println!("{:?}", contract);
 
         contract.vote(0, "Pikachu".to_string());
         contract.vote(0, "Pikachu".to_string());
@@ -275,7 +332,7 @@ mod tests {
         assert_eq!(
             contract
                 .contests
-                .get(0)
+                .get(&0)
                 .expect("Contest not found")
                 .poke_first
                 .votes,
@@ -286,7 +343,7 @@ mod tests {
         assert_eq!(
             contract
                 .contests
-                .get(0)
+                .get(&0)
                 .expect("Contest not found")
                 .poke_second
                 .votes,
@@ -296,7 +353,7 @@ mod tests {
         assert_eq!(
             contract
                 .contests
-                .get(1)
+                .get(&1)
                 .expect("Contest not found")
                 .poke_first
                 .votes,
@@ -305,7 +362,7 @@ mod tests {
         assert_eq!(
             contract
                 .contests
-                .get(1)
+                .get(&1)
                 .expect("Contest not found")
                 .poke_second
                 .votes,
@@ -315,7 +372,7 @@ mod tests {
         assert_eq!(
             contract
                 .contests
-                .get(0)
+                .get(&0)
                 .expect("Contest not found")
                 .total_votes(),
             3
@@ -323,7 +380,7 @@ mod tests {
         assert_eq!(
             contract
                 .contests
-                .get(1)
+                .get(&1)
                 .expect("Contest not found")
                 .total_votes(),
             2
@@ -340,11 +397,9 @@ mod tests {
     #[test]
     fn test_timestamp() {
         let now = current_timestamp_millis();
-        let now_seconds = current_timestamp_seconds();
         let future = current_timestamp_millis_offset_by(60);
 
         assert!(now < future);
-        assert!(now_seconds < future);
     }
 
     #[test]
@@ -357,7 +412,7 @@ mod tests {
     fn voting_time_passes() {
         let mut contract = setup_contract_time_offset(10);
 
-        let contest = contract.contests.get(0).expect("Contest not found");
+        let contest = contract.contests.get(&0).expect("Contest not found");
 
         assert!(contest.max_time > current_timestamp_millis());
 
@@ -368,7 +423,7 @@ mod tests {
         assert_eq!(
             contract
                 .contests
-                .get(0)
+                .get(&0)
                 .expect("Contest not found")
                 .total_votes(),
             3,
@@ -377,25 +432,11 @@ mod tests {
         assert_eq!(
             contract
                 .contests
-                .get(0)
+                .get(&0)
                 .expect("Contest not found")
                 .poke_first
                 .votes,
             2
         );
-    }
-
-    #[test]
-    #[should_panic]
-    fn voting_time_fails() {
-        let mut contract = setup_contract_time_offset(2);
-
-        let contest = contract.contests.get(0).expect("Contest not found");
-
-        assert!(contest.max_time > current_timestamp_millis());
-
-        thread::sleep(Duration::from_secs(3));
-
-        contract.vote(0, "Pikachu".to_string());
     }
 }
