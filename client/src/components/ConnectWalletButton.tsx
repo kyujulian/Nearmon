@@ -7,6 +7,9 @@ const ConnectWalletButton = () => {
     const walletSelectorContext = useWalletSelector();
 
 
+
+
+
     const handleSignOut = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
         e.preventDefault();
         walletSelectorContext.selector.wallet().then((wallet) => wallet.signOut())

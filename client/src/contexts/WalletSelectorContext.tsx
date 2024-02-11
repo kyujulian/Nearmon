@@ -7,6 +7,8 @@ import { setupMyNearWallet } from "@near-wallet-selector/my-near-wallet";
 import { setupWalletConnect } from "@near-wallet-selector/wallet-connect";
 import { setupWalletSelector } from "@near-wallet-selector/core";
 
+import { Contract } from "near-api-js";
+
 import type { ReactNode } from "react";
 import React, {
     useCallback,
@@ -18,7 +20,6 @@ import React, {
 import { distinctUntilChanged, map } from "rxjs";
 
 import { Loading } from "@/components/Loading";
-// import { CONTRACT_ID } from "../constants";
 
 const CONTRACT_ID = process.env.NEXT_PUBLIC_CONTRACT_ID;
 
@@ -46,6 +47,7 @@ export const WalletSelectorContextProvider: React.FC<{
     const [modal, setModal] = useState<WalletSelectorModal | null>(null);
     const [accounts, setAccounts] = useState<Array<AccountState>>([]);
     const [loading, setLoading] = useState<boolean>(true);
+    const [contract, setContract] = useState<Contract | null>();
 
     const init = useCallback(async () => {
         const _selector = await setupWalletSelector({
@@ -71,6 +73,7 @@ export const WalletSelectorContextProvider: React.FC<{
         const state = _selector.store.getState();
         setAccounts(state.accounts);
 
+
         // this is added for debugging purpose only
         // for more information (https://github.com/near/wallet-selector/pull/764#issuecomment-1498073367)
         window.selector = _selector;
@@ -79,6 +82,8 @@ export const WalletSelectorContextProvider: React.FC<{
         setSelector(_selector);
         setModal(_modal);
         setLoading(false);
+
+
     }, []);
 
     useEffect(() => {

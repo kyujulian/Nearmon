@@ -8,8 +8,34 @@ import { getPokemonByName } from '@/services/pokemons'
 import PokemonList from '@/sections/PokemonList'
 
 import type { Pokemon } from '@/services/pokemons'
+import { useWalletSelector } from '@/contexts/WalletSelectorContext'
+
+import { viewMethod, callMethod } from "@/contexts/contractInteraction";
+
+import type { ViewRequest, CallRequest } from "@/contexts/contractInteraction";
 
 const PokemonSelector = () => {
+
+    const CONTRACT_ID = process.env.NEXT_PUBLIC_CONTRACT_ID;
+    const walletSelectorContext = useWalletSelector();
+
+
+
+    const sendPokemonContest = async (e: any) => {
+
+        const callRequest: CallRequest = {
+            contractId: CONTRACT_ID!,
+            method: "add_contest",
+            walletSelector: walletSelectorContext.selector,
+            args: { pokemon1: pokemonFirst?.name, pokemon2: pokemonSecond?.name },
+            accountId: walletSelectorContext.accountId!,
+
+        }
+        callMethod(callRequest);
+        console.log("Pokemon 1:", pokemonFirst?.name); console.log("Pokemon 2:", pokemonSecond?.name)
+    }
+
+
 
     const [pokemonFirst, setPokemonFirst] = useState<Pokemon | null>(null);
     const [pokemonSecond, setPokemonSecond] = useState<Pokemon | null>(null);
@@ -26,7 +52,8 @@ const PokemonSelector = () => {
                     <PokemonCard key="" pokemon={pokemonSecond} setPokemon={setPokemonSecond} />
                 </div>
             </div>
-            <button onClick={() => { console.log("Pokemon 1:", pokemonFirst?.name); console.log("Pokemon 2:", pokemonSecond?.name) }} className="max-w-24 rounded-md bg-black px-4 py-2 text-white hover:scale-110 transition shadow-black drop-shadow-sm">
+
+            <button onClick={sendPokemonContest} className="max-w-24 rounded-md bg-black px-4 py-2 text-white hover:scale-110 transition shadow-black drop-shadow-sm">
                 Send
             </button>
         </div>

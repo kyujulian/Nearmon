@@ -12,7 +12,9 @@ export default function Home() {
                     {' '}
                     Start a new Contest
                 </h1>
-                <PokemonSelector />
+                <WalletSelectorContextProvider>
+                    <PokemonSelector />
+                </WalletSelectorContextProvider>
             </div>
         </main>
     )
