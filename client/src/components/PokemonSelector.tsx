@@ -1,7 +1,7 @@
 "use client"
 
 
-import { useState } from 'react'
+import { useContext, useState } from 'react'
 import PokemonCard from '@/components/PokemonCard'
 import { getPokemonByName } from '@/services/pokemons'
 

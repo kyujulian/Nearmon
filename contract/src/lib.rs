@@ -3,6 +3,7 @@ use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::env;
 use near_sdk::near_bindgen;
 use near_sdk::serde::{Deserialize, Serialize};
+use near_sdk::serde_json;
 use near_sdk::store::UnorderedMap;
 
 fn current_timestamp_millis() -> u64 {
@@ -183,7 +184,17 @@ impl Contract {
     }
 
     pub fn get_contest(&self, id: i64) -> String {
-        format!("{:?}", self.contests.get(&id).expect("Contest Not found"))
+        serde_json::to_string(self.contests.get(&id).expect("Contest Not Found"))
+            .expect("Failed to parse contest as json")
+    }
+    pub fn get_contests(&self) -> String {
+        let mut all_contests: Vec<String> = Vec::new();
+        for (_, contest) in self.contests.iter() {
+            let contest_json = serde_json::to_string(contest).expect("Failed to serialize contest");
+            all_contests.push(contest_json);
+        }
+
+        return serde_json::to_string(&all_contests).expect("Failed to serialize contest vec");
     }
     pub fn vote(&mut self, id: i64, pokemon_name: String) {
         if self.contests.len() == 0 {

@@ -3229,6 +3229,7 @@ name = "sandbox"
 version = "1.0.0"
 dependencies = [
  "near-workspaces",
+ "serde",
  "serde_json",
  "tokio",
 ]

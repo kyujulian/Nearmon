@@ -2,6 +2,7 @@ import Image from 'next/image'
 import PokemonSelector from '@/components/PokemonSelector'
 import Navbar from "@/sections/Navbar"
 import PokemonList from "@/sections/PokemonList"
+import { WalletSelectorContextProvider } from '@/contexts/WalletSelectorContext'
 export default function Home() {
     return (
         <main className="h-[80vh]">
