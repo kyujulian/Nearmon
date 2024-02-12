@@ -7,7 +7,7 @@ const Navbar = () => {
                 <a href="/"> <h1 className="text-3xl"> Nearmon</h1></a>
                 <ul className="flex flex-row justify-center items-center gap-5">
                     <li><a href="/active">Current Contests</a></li>
-                    <li><a href="/alltime">All Time</a></li>
+                    <li><a href="/all">All Time</a></li>
                 </ul>
                 <WalletSelectorContextProvider>
                     <ConnectWalletButton />

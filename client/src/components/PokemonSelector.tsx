@@ -27,7 +27,7 @@ const PokemonSelector = () => {
             contractId: CONTRACT_ID!,
             method: "add_contest",
             walletSelector: walletSelectorContext.selector,
-            args: { pokemon1: pokemonFirst?.name, pokemon2: pokemonSecond?.name },
+            args: { first_pokemon_name: pokemonFirst?.name, second_pokemon_name: pokemonSecond?.name },
             accountId: walletSelectorContext.accountId!,
 
         }

@@ -1,3 +1,4 @@
+use chrono::{DateTime, NaiveDateTime, Utc};
 use near_workspaces::{types::NearToken, Account, Contract};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -111,11 +112,27 @@ async fn test_get_contests(
     assert!(contests[3].poke_first.name == "Zubat");
     println!("{:#?}", contests);
 
-    println!("      Passed ✅ get contests");
+    println!("{}", convert_ns_to_readable(contests[0].max_time as i64));
+
+    println!("Passed ✅ get contests");
 
     Ok(())
 }
 
+fn convert_ns_to_readable(timestamp_ns: i64) -> String {
+    // Create a NaiveDateTime from the timestamp
+    let naive_datetime = NaiveDateTime::from_timestamp_opt(
+        timestamp_ns / 1_000_000_000,
+        (timestamp_ns % 1_000_000_000) as u32,
+    )
+    .expect("Invalid timestamp");
+
+    // Convert NaiveDateTime to DateTime<Utc>
+    let datetime_utc: DateTime<Utc> = DateTime::from_utc(naive_datetime, Utc);
+
+    // Format the datetime into a readable string
+    datetime_utc.format("%Y-%m-%d %H:%M:%S").to_string()
+}
 async fn add_contest(
     user: &Account,
     contract: &Contract,
@@ -126,15 +143,8 @@ async fn add_contest(
     user.call(contract.id(), "add_contest")
         .args_json(json!(
             {
-                "id": id,
-                "poke_first": {
-                "name" : pokemon_first,
-                "votes" : 0
-                },
-                "poke_second": {
-                "name" : pokemon_second,
-                "votes" : 0
-            },
+                "first_pokemon_name":  pokemon_first,
+                "second_pokemon_name":  pokemon_second,
         }))
         .transact()
         .await?
